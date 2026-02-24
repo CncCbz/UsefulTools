@@ -4,7 +4,6 @@ import { ref, watch, onMounted } from 'vue'
 const input = ref('https://example.com')
 const size = ref(256)
 const canvasRef = ref<HTMLCanvasElement>()
-const copyField = ref('')
 
 // 简易 QR 码生成 — 使用 Canvas 绘制
 // 利用一个轻量的 QR 编码算法
@@ -173,11 +172,6 @@ function download() {
   link.download = 'qrcode.png'
   link.href = canvas.toDataURL('image/png')
   link.click()
-}
-
-async function copy(_: string, field: string) {
-  copyField.value = field
-  setTimeout(() => { copyField.value = '' }, 1200)
 }
 </script>
 

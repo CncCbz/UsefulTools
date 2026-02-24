@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 
 const hexInput = ref('#3b82f6')
 const copyField = ref('')
-
-function clamp(v: number, min: number, max: number) { return Math.max(min, Math.min(max, v)) }
 
 function hexToRgb(hex: string): [number, number, number] | null {
   const m = hex.replace('#', '').match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)

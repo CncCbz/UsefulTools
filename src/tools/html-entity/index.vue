@@ -30,7 +30,6 @@ function convert() {
 }
 
 function swap() {
-  const tmp = input.value
   input.value = output.value || ''
   output.value = ''
   mode.value = mode.value === 'encode' ? 'decode' : 'encode'
