@@ -1,0 +1,60 @@
+@import "@fontsource/space-grotesk/300.css";
+@import "@fontsource/space-grotesk/400.css";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
+@import "material-icons/iconfont/material-icons.css";
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #f9b11f;
+  --color-bg-light: #f8f7f5;
+  --color-bg-dark: #231c0f;
+  --color-electric-blue: #3b82f6;
+  --color-neon-green: #84cc16;
+  --color-vibrant-purple: #a855f7;
+  --color-deep-charcoal: #1f1a14;
+  --color-coral-red: #ff6b6b;
+  --color-hot-pink: #ec4899;
+
+  --font-display: "Space Grotesk", sans-serif;
+
+  --shadow-hard: 4px 4px 0 0 #000000;
+  --shadow-hard-sm: 2px 2px 0 0 #000000;
+  --shadow-hard-xl: 8px 8px 0 0 #000000;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar-track {
+  background: #231c0f;
+  border-left: 2px solid #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #f9b11f;
+  border: 2px solid #000;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #e09b0e;
+}
+
+/* Global base styles */
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-display);
+  background-color: var(--color-bg-dark);
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: var(--color-primary);
+  color: #000;
+}
+

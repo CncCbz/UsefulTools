@@ -1,0 +1,25 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "http:default",
+    {
+      "identifier": "http:allow-fetch",
+      "allow": [
+        { "url": "https://translation.googleapis.com/*" },
+        { "url": "https://api.siliconflow.cn/*" }
+      ]
+    },
+    {
+      "identifier": "http:allow-fetch-send",
+      "allow": [
+        { "url": "https://translation.googleapis.com/*" },
+        { "url": "https://api.siliconflow.cn/*" }
+      ]
+    }
+  ]
+}
