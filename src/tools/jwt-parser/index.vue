@@ -134,7 +134,7 @@ function loadSample() {
               <span class="material-icons text-hot-pink text-lg">fingerprint</span>
               <span class="text-sm font-bold text-gray-400 uppercase tracking-wider">Signature</span>
             </div>
-            <button @click="copy(parsed.signature, 'sig')"
+            <button @click="copy(parsed.signature ?? '', 'sig')"
               class="flex items-center gap-1 text-xs text-gray-500 hover:text-primary transition-colors">
               <span class="material-icons text-sm">{{ copyField === 'sig' ? 'check' : 'content_copy' }}</span>
               {{ copyField === 'sig' ? '已复制' : '复制' }}

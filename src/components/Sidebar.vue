@@ -1,5 +1,8 @@
 <script setup lang="ts">
 const model = defineModel<number>({ default: 0 })
+const emit = defineEmits<{
+  openSettings: []
+}>()
 
 const navItems = [
   { icon: 'construction', title: '工具' },
@@ -32,7 +35,10 @@ const navItems = [
     </nav>
 
     <!-- Settings -->
-    <button class="w-12 h-12 bg-[#332b1f] border-2 border-black rounded-lg shadow-hard-sm flex items-center justify-center hover:bg-gray-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+    <button
+      class="w-12 h-12 bg-[#332b1f] border-2 border-black rounded-lg shadow-hard-sm flex items-center justify-center hover:bg-gray-200 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+      @click="emit('openSettings')"
+    >
       <span class="material-icons text-white text-2xl hover:text-black">settings</span>
     </button>
   </aside>

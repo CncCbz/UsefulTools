@@ -50,6 +50,7 @@ async function copyIp() {
           v-model="searchQuery"
           type="text"
           placeholder="搜索工具..."
+          data-search-input
           class="w-full bg-white text-black font-bold uppercase placeholder-gray-500 border-[3px] border-black rounded-lg py-2.5 px-5 shadow-hard-sm focus:shadow-none focus:translate-x-[2px] focus:translate-y-[2px] focus:ring-0 focus:border-black transition-all outline-none text-sm"
         />
         <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-black text-2xl pointer-events-none">search</span>

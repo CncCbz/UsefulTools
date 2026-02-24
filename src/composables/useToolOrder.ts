@@ -1,5 +1,5 @@
-import { ref, watch } from 'vue'
-import { tools, type ToolInfo } from '../data/tools'
+import { ref } from 'vue'
+import { type ToolInfo } from '../data/tools'
 
 const STORAGE_KEY = 'usefultools-tool-order'
 

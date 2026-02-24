@@ -6,6 +6,7 @@ import ToolCard from '../components/ToolCard.vue'
 import { tools } from '../data/tools'
 import { useFavorites } from '../composables/useFavorites'
 import { useToolOrder } from '../composables/useToolOrder'
+import { useSettings } from '../composables/useSettings'
 
 const props = defineProps<{
   /** 0=全部工具, 1=收藏 */
@@ -15,8 +16,18 @@ const props = defineProps<{
 const activeCategory = ref('全部工具')
 const { isFavorite } = useFavorites()
 const { sortTools, updateOrder } = useToolOrder()
+const settings = useSettings()
 
 const canDrag = computed(() => props.navMode !== 1 && activeCategory.value === '全部工具')
+
+const gridClass = computed(() => {
+  const cols = settings.value.gridColumns
+  if (cols === 3) return 'grid-cols-3'
+  if (cols === 4) return 'grid-cols-4'
+  if (cols === 5) return 'grid-cols-5'
+  if (cols === 6) return 'grid-cols-6'
+  return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+})
 
 const filteredTools = computed(() => {
   let list = sortTools([...tools])
@@ -73,7 +84,8 @@ onBeforeUnmount(() => { sortableInstance?.destroy() })
 
     <div
       ref="gridRef"
-      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5"
+      class="grid gap-4 md:gap-5"
+      :class="gridClass"
     >
       <div v-for="tool in filteredTools" :key="tool.id" :data-id="tool.id">
         <ToolCard
