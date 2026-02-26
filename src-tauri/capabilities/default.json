@@ -5,6 +5,12 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-is-maximized",
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-focus",
     "opener:default",
     "http:default",
     "dialog:default",
@@ -23,14 +29,18 @@
       "identifier": "http:allow-fetch",
       "allow": [
         { "url": "https://translation.googleapis.com/*" },
-        { "url": "https://api.siliconflow.cn/*" }
+        { "url": "https://api.siliconflow.cn/*" },
+        { "url": "https://plugins.usefultools.com/*" },
+        { "url": "http://localhost:3000/*" }
       ]
     },
     {
       "identifier": "http:allow-fetch-send",
       "allow": [
         { "url": "https://translation.googleapis.com/*" },
-        { "url": "https://api.siliconflow.cn/*" }
+        { "url": "https://api.siliconflow.cn/*" },
+        { "url": "https://plugins.usefultools.com/*" },
+        { "url": "http://localhost:3000/*" }
       ]
     }
   ]

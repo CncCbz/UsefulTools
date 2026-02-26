@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { allCategories } from '../data/tools'
+import { computed } from 'vue'
+import { usePluginStore } from '../composables/usePluginStore'
 
 const model = defineModel<string>({ default: '全部工具' })
+const { allCategories } = usePluginStore()
 
-const categories = ['全部工具', ...allCategories]
+const categories = computed(() => {
+  return ['全部工具', ...allCategories.value]
+})
 </script>
 
 <template>

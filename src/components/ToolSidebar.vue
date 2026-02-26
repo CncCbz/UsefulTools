@@ -1,22 +1,30 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { tools, allCategories } from '../data/tools'
+import { usePluginStore } from '../composables/usePluginStore'
 import { useTabs } from '../composables/useTabs'
 import { useFavorites } from '../composables/useFavorites'
 
 const route = useRoute()
 const { openTab } = useTabs()
 const { isFavorite } = useFavorites()
+const { activeTools, allCategories } = usePluginStore()
 
 const activeFilter = ref<'all' | 'fav'>('all')
 
 // 默认折叠所有分类
-const collapsedCats = reactive(new Set<string>(allCategories))
+const collapsedCats = reactive(new Set<string>(allCategories.value))
+
+// 当分类变化时，新分类也默认折叠
+watch(allCategories, (cats) => {
+  for (const cat of cats) {
+    if (!collapsedCats.has(cat)) collapsedCats.add(cat)
+  }
+})
 
 // 路由变化时自动展开当前工具所在分类
 watch(() => route.path, (path) => {
-  const tool = tools.find(t => t.route === path)
+  const tool = activeTools.value.find(t => t.route === path)
   if (tool) {
     for (const cat of tool.categories) {
       collapsedCats.delete(cat)
@@ -31,13 +39,13 @@ function toggleCat(cat: string) {
 
 const filteredTools = computed(() => {
   if (activeFilter.value === 'fav') {
-    return tools.filter(t => isFavorite(t.id))
+    return activeTools.value.filter(t => isFavorite(t.id))
   }
-  return tools
+  return activeTools.value
 })
 
 const groupedTools = computed(() => {
-  const map = new Map<string, typeof tools>()
+  const map = new Map<string, ToolInfo[]>()
   for (const t of filteredTools.value) {
     for (const cat of t.categories) {
       if (!map.has(cat)) map.set(cat, [])

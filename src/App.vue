@@ -9,9 +9,9 @@ import TabBar from './components/TabBar.vue'
 import ToolSidebar from './components/ToolSidebar.vue'
 import TitleBar from './components/TitleBar.vue'
 import CommandPalette from './components/CommandPalette.vue'
-import { tools } from './data/tools'
 import { useSettings, exportAllData, importAllData } from './composables/useSettings'
 import { useTabs } from './composables/useTabs'
+import { usePluginStore } from './composables/usePluginStore'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,8 +19,10 @@ const settings = useSettings()
 const sidebarNav = ref(settings.value.defaultPage)
 
 const isHome = computed(() => route.path === '/')
+const isStore = computed(() => route.path === '/store')
 
 const { ensureTab } = useTabs()
+const pluginStore = usePluginStore()
 
 // 路由变化时确保标签存在
 watch(() => route.path, (path) => {
@@ -62,7 +64,10 @@ function handleGlobalKey(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => document.addEventListener('keydown', handleGlobalKey))
+onMounted(() => {
+  document.addEventListener('keydown', handleGlobalKey)
+  pluginStore.initialize()
+})
 onBeforeUnmount(() => document.removeEventListener('keydown', handleGlobalKey))
 
 // 导出数据
@@ -99,6 +104,16 @@ async function handleImport() {
 const importSuccess = ref(false)
 const importError = ref(false)
 const searchQuery = ref('')
+const debugError = ref('')
+
+async function handleLoadDebug() {
+  debugError.value = ''
+  try {
+    await pluginStore.loadDebugPlugins(settings.value.debugPluginDir)
+  } catch (err: any) {
+    debugError.value = typeof err === 'string' ? err : (err?.message || String(err))
+  }
+}
 </script>
 
 <template>
@@ -107,20 +122,37 @@ const searchQuery = ref('')
 
     <!-- 首页：带 Sidebar + Header 的 Dashboard 布局 -->
     <div v-if="isHome" class="flex-1 overflow-hidden flex flex-col md:flex-row">
-    <Sidebar v-model="sidebarNav" @open-settings="showSettings = true" />
+      <Sidebar v-model="sidebarNav" @open-settings="showSettings = true" />
 
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-      <div
-        class="absolute inset-0 opacity-10 pointer-events-none z-0"
-        style="background-image: radial-gradient(#f9b11f 1px, transparent 1px); background-size: 20px 20px;"
-      />
+      <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <div
+          class="absolute inset-0 opacity-10 pointer-events-none z-0"
+          style="background-image: radial-gradient(#f9b11f 1px, transparent 1px); background-size: 20px 20px;"
+        />
 
-      <DashboardHeader :nav-mode="sidebarNav" v-model="searchQuery" />
+        <DashboardHeader :nav-mode="sidebarNav" v-model="searchQuery" />
 
-      <div ref="homeScrollRef" class="flex-1 overflow-y-auto p-6 md:p-8 z-10 pb-20">
-        <router-view :nav-mode="sidebarNav" :search-query="searchQuery" />
+        <div ref="homeScrollRef" class="flex-1 overflow-y-auto p-6 md:p-8 z-10 pb-20">
+          <router-view :nav-mode="sidebarNav" :search-query="searchQuery" />
+        </div>
+      </main>
+    </div>
+
+    <!-- 插件商店：独立全屏布局 -->
+    <div v-else-if="isStore" class="flex-1 overflow-hidden bg-bg-dark">
+      <router-view />
+    </div>
+
+    <!-- 工具页：左侧工具栏 + 右侧（TabBar + 内容区） -->
+    <div v-else class="flex-1 flex overflow-hidden bg-bg-dark">
+      <ToolSidebar />
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <TabBar />
+        <div class="flex-1 overflow-y-auto p-5">
+          <router-view />
+        </div>
       </div>
-    </main>
+    </div>
 
     <!-- 设置弹窗 -->
     <Teleport to="body">
@@ -250,10 +282,64 @@ const searchQuery = ref('')
             <div v-if="importError" class="text-coral-red text-xs font-bold flex items-center gap-1">
               <span class="material-icons text-sm">error</span> 导入失败，请检查文件格式
             </div>
+
+            <!-- 调试模式 -->
+            <div class="flex items-center justify-between py-3 border-t border-white/10">
+              <div>
+                <span class="text-white font-bold text-sm">调试模式</span>
+                <p class="text-white/40 text-xs mt-0.5">从本地目录加载未发布的插件</p>
+              </div>
+              <button
+                class="w-10 h-6 rounded-full border-2 border-black transition-all relative"
+                :class="settings.debugMode ? 'bg-neon-green' : 'bg-[#332b1f]'"
+                @click="settings.debugMode = !settings.debugMode; if (!settings.debugMode) pluginStore.unloadDebugPlugins()"
+              >
+                <span
+                  class="absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white border border-black transition-all"
+                  :class="settings.debugMode ? 'left-[18px]' : 'left-0.5'"
+                />
+              </button>
+            </div>
+            <template v-if="settings.debugMode">
+              <div class="py-2">
+                <div class="flex gap-2">
+                  <input
+                    v-model="settings.debugPluginDir"
+                    type="text"
+                    placeholder="插件项目根目录路径（含 plugin.json 和 dist/）"
+                    class="flex-1 px-3 py-2 rounded-lg border-2 border-black bg-[#332b1f] text-white text-xs font-mono focus:border-neon-green focus:outline-none transition-all"
+                  />
+                  <button
+                    class="px-3 py-2 rounded-lg border-2 border-black bg-neon-green text-black font-bold text-xs shadow-hard-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50"
+                    :disabled="pluginStore.isLoadingDebug.value || !settings.debugPluginDir.trim()"
+                    @click="handleLoadDebug"
+                  >{{ pluginStore.isLoadingDebug.value ? '...' : '加载' }}</button>
+                </div>
+                <div v-if="debugError" class="text-coral-red text-xs font-bold flex items-center gap-1 mt-2">
+                  <span class="material-icons text-sm">error</span> {{ debugError }}
+                </div>
+                <div v-if="pluginStore.debugPlugins.value.length > 0" class="mt-3">
+                  <div class="text-white/40 text-xs font-bold mb-2">已加载 {{ pluginStore.debugPlugins.value.length }} 个调试插件</div>
+                  <div class="flex flex-wrap gap-1.5">
+                    <span
+                      v-for="dp in pluginStore.debugPlugins.value"
+                      :key="dp.meta.id"
+                      class="inline-flex items-center gap-1 px-2 py-1 rounded border border-neon-green/30 bg-neon-green/10 text-neon-green text-xs font-bold cursor-pointer hover:bg-neon-green/20 transition-all"
+                      @click="pluginStore.reloadDebugPlugin(dp.meta.id)"
+                      title="点击重新加载"
+                    >
+                      <span class="material-icons text-xs">{{ dp.meta.icon }}</span>
+                      {{ dp.meta.subtitle }}
+                      <span class="material-icons text-xs opacity-50">refresh</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </template>
           </div>
 
           <!-- 关于 -->
-          <div v-if="settingsTab === 'about'" class="space-y-4">
+          <div v-else-if="settingsTab === 'about'" class="space-y-4">
             <div class="flex items-center gap-4 py-3">
               <div class="w-14 h-14 bg-primary border-3 border-black rounded-xl shadow-hard-sm flex items-center justify-center shrink-0">
                 <span class="material-icons text-black text-3xl">grid_view</span>
@@ -275,25 +361,13 @@ const searchQuery = ref('')
               </div>
               <div class="flex items-center justify-between py-2 border-t border-white/10">
                 <span class="text-white/50 font-bold text-xs uppercase">工具数量</span>
-                <span class="text-primary font-bold">{{ tools.length }}</span>
+                <span class="text-primary font-bold">{{ pluginStore.activeTools.value.length }}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
     </Teleport>
-  </div>
-
-    <!-- 工具页：左侧工具栏 + 右侧（TabBar + 内容区） -->
-    <div v-else class="flex-1 flex overflow-hidden bg-bg-dark">
-      <ToolSidebar />
-      <div class="flex-1 flex flex-col overflow-hidden">
-        <TabBar />
-        <div class="flex-1 overflow-y-auto p-5">
-          <router-view />
-        </div>
-      </div>
-    </div>
 
     <CommandPalette v-model="showCommandPalette" />
   </div>

@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
-import { tools } from '../data/tools'
+import { usePluginStore } from '../composables/usePluginStore'
 import { useTabs } from '../composables/useTabs'
 import { useFavorites } from '../composables/useFavorites'
 
 const model = defineModel<boolean>({ default: false })
 const { openTab } = useTabs()
 const { isFavorite } = useFavorites()
+const { activeTools } = usePluginStore()
 
 const query = ref('')
 const selectedIndex = ref(0)
 const inputRef = ref<HTMLInputElement | null>(null)
 
 const filtered = computed(() => {
-  if (!query.value.trim()) return tools
+  if (!query.value.trim()) return activeTools.value
   const q = query.value.toLowerCase()
-  return tools.filter(t =>
+  return activeTools.value.filter(t =>
     t.subtitle.toLowerCase().includes(q) ||
     t.categories.some(c => c.toLowerCase().includes(q))
   )

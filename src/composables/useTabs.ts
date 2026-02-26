@@ -1,6 +1,7 @@
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { tools, type ToolInfo } from '../data/tools'
+import type { ToolInfo } from '../data/tools'
+import { usePluginStore } from './usePluginStore'
 
 export interface TabItem {
   id: string
@@ -15,10 +16,7 @@ function load(): TabItem[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
-    const tabs: TabItem[] = JSON.parse(raw)
-    // 过滤掉无效的标签（工具可能已被移除）
-    const validIds = new Set(tools.map(t => t.id))
-    return tabs.filter(t => validIds.has(t.id))
+    return JSON.parse(raw)
   } catch {
     return []
   }
@@ -33,6 +31,10 @@ const openTabs = ref<TabItem[]>(load())
 export function useTabs() {
   const router = useRouter()
   const route = useRoute()
+  const { activeTools: pluginTools } = usePluginStore()
+
+  // 使用插件工具列表
+  const allTools = computed<ToolInfo[]>(() => pluginTools.value)
 
   function toolToTab(tool: ToolInfo): TabItem {
     return { id: tool.id, route: tool.route, title: tool.subtitle, icon: tool.icon }
@@ -42,7 +44,7 @@ export function useTabs() {
   function openTab(toolId: string) {
     const existing = openTabs.value.find(t => t.id === toolId)
     if (!existing) {
-      const tool = tools.find(t => t.id === toolId)
+      const tool = allTools.value.find(t => t.id === toolId)
       if (!tool) return
       openTabs.value.push(toolToTab(tool))
     }
@@ -86,7 +88,7 @@ export function useTabs() {
   /** 确保当前路由对应的工具在标签中 */
   function ensureTab(path: string) {
     if (path === '/') return
-    const tool = tools.find(t => t.route === path)
+    const tool = allTools.value.find(t => t.route === path)
     if (tool && !openTabs.value.find(t => t.id === tool.id)) {
       openTabs.value.push(toolToTab(tool))
     }

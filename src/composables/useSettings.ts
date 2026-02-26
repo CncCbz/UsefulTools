@@ -6,12 +6,16 @@ export interface AppSettings {
   defaultPage: number // 0=工具, 1=收藏
   gridColumns: number // 0=自动, 3/4/5/6=固定列数
   searchShortcut: string // 快捷键，如 'Ctrl+K'
+  debugMode: boolean // 调试模式
+  debugPluginDir: string // 本地插件目录路径
 }
 
 const defaults: AppSettings = {
   defaultPage: 0,
   gridColumns: 0,
   searchShortcut: 'Ctrl+K',
+  debugMode: false,
+  debugPluginDir: '',
 }
 
 function load(): AppSettings {

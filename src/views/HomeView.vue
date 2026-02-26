@@ -3,10 +3,10 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import Sortable from 'sortablejs'
 import CategoryTabs from '../components/CategoryTabs.vue'
 import ToolCard from '../components/ToolCard.vue'
-import { tools } from '../data/tools'
 import { useFavorites } from '../composables/useFavorites'
 import { useToolOrder } from '../composables/useToolOrder'
 import { useSettings } from '../composables/useSettings'
+import { usePluginStore } from '../composables/usePluginStore'
 
 const props = defineProps<{
   /** 0=全部工具, 1=收藏 */
@@ -18,6 +18,7 @@ const activeCategory = ref('全部工具')
 const { isFavorite } = useFavorites()
 const { sortTools, updateOrder } = useToolOrder()
 const settings = useSettings()
+const { activeTools } = usePluginStore()
 
 const canDrag = computed(() => props.navMode !== 1 && activeCategory.value === '全部工具')
 
@@ -31,7 +32,7 @@ const gridClass = computed(() => {
 })
 
 const filteredTools = computed(() => {
-  let list = sortTools([...tools])
+  let list = sortTools([...activeTools.value])
 
   if (props.navMode === 1) {
     list = list.filter(t => isFavorite(t.id))

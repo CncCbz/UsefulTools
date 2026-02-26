@@ -3,14 +3,15 @@ import { reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTabs, type TabItem } from '../composables/useTabs'
 import { useFavorites } from '../composables/useFavorites'
-import { tools } from '../data/tools'
+import { usePluginStore } from '../composables/usePluginStore'
 
 const route = useRoute()
 const router = useRouter()
 const { openTabs, openTab, closeTab, closeOtherTabs, closeAllTabs } = useTabs()
 const { isFavorite, toggleFavorite } = useFavorites()
+const { activeTools } = usePluginStore()
 
-const currentToolId = () => tools.find(t => t.route === route.path)?.id || ''
+const currentToolId = () => activeTools.value.find(t => t.route === route.path)?.id || ''
 
 /** 右键菜单 */
 const ctxMenu = reactive<{ show: boolean; x: number; y: number; tabId: string }>({
