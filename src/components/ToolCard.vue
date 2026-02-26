@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useTabs } from '../composables/useTabs'
 
 const props = defineProps<{
   id: string
@@ -14,11 +14,11 @@ const props = defineProps<{
   route?: string
 }>()
 
-const router = useRouter()
+const { openTab } = useTabs()
 
 function handleClick() {
-  if (props.route) {
-    router.push(props.route)
+  if (props.id) {
+    openTab(props.id)
   }
 }
 </script>

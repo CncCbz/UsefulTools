@@ -11,6 +11,7 @@ import { useSettings } from '../composables/useSettings'
 const props = defineProps<{
   /** 0=全部工具, 1=收藏 */
   navMode?: number
+  searchQuery?: string
 }>()
 
 const activeCategory = ref('全部工具')
@@ -38,6 +39,16 @@ const filteredTools = computed(() => {
 
   if (activeCategory.value !== '全部工具') {
     list = list.filter(t => t.categories.includes(activeCategory.value))
+  }
+
+  const q = (props.searchQuery ?? '').trim().toLowerCase()
+  if (q) {
+    list = list.filter(t =>
+      t.subtitle.toLowerCase().includes(q) ||
+      t.description.toLowerCase().includes(q) ||
+      t.id.toLowerCase().includes(q) ||
+      t.categories.some(c => c.toLowerCase().includes(q))
+    )
   }
 
   return list
@@ -101,6 +112,16 @@ onBeforeUnmount(() => { sortableInstance?.destroy() })
           :route="tool.route"
         />
       </div>
+    </div>
+
+    <!-- 搜索无结果提示 -->
+    <div
+      v-if="navMode !== 1 && filteredTools.length === 0 && (searchQuery ?? '').trim()"
+      class="flex flex-col items-center justify-center py-20 text-gray-500"
+    >
+      <span class="material-icons text-6xl mb-4">search_off</span>
+      <p class="text-lg font-bold">没有找到匹配的工具</p>
+      <p class="text-sm mt-1">试试其他关键词吧</p>
     </div>
 
     <!-- 收藏为空提示 -->

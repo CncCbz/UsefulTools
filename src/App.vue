@@ -5,21 +5,27 @@ import { save, open } from '@tauri-apps/plugin-dialog'
 import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
 import Sidebar from './components/Sidebar.vue'
 import DashboardHeader from './components/DashboardHeader.vue'
+import TabBar from './components/TabBar.vue'
+import ToolSidebar from './components/ToolSidebar.vue'
+import TitleBar from './components/TitleBar.vue'
+import CommandPalette from './components/CommandPalette.vue'
 import { tools } from './data/tools'
-import { useFavorites } from './composables/useFavorites'
 import { useSettings, exportAllData, importAllData } from './composables/useSettings'
+import { useTabs } from './composables/useTabs'
 
 const route = useRoute()
 const router = useRouter()
 const settings = useSettings()
 const sidebarNav = ref(settings.value.defaultPage)
-const { isFavorite, toggleFavorite } = useFavorites()
 
 const isHome = computed(() => route.path === '/')
-const currentTool = computed(() => tools.find(t => t.route === route.path))
-const currentToolName = computed(() => currentTool.value?.subtitle || '')
-const currentToolIcon = computed(() => currentTool.value?.icon || 'build')
-const currentToolId = computed(() => currentTool.value?.id || '')
+
+const { ensureTab } = useTabs()
+
+// 路由变化时确保标签存在
+watch(() => route.path, (path) => {
+  ensureTab(path)
+}, { immediate: true })
 
 // 保持首页滚动位置
 const homeScrollRef = ref<HTMLElement | null>(null)
@@ -41,6 +47,7 @@ watch(isHome, (val, oldVal) => {
 // 设置弹窗
 const showSettings = ref(false)
 const settingsTab = ref<'general' | 'about'>('general')
+const showCommandPalette = ref(false)
 
 // 全局搜索快捷键
 function handleGlobalKey(e: KeyboardEvent) {
@@ -51,11 +58,7 @@ function handleGlobalKey(e: KeyboardEvent) {
 
   if (ctrl === (e.ctrlKey || e.metaKey) && alt === e.altKey && e.key.toUpperCase() === key) {
     e.preventDefault()
-    if (!isHome.value) router.push('/')
-    nextTick(() => {
-      const input = document.querySelector<HTMLInputElement>('[data-search-input]')
-      input?.focus()
-    })
+    showCommandPalette.value = !showCommandPalette.value
   }
 }
 
@@ -95,11 +98,15 @@ async function handleImport() {
 
 const importSuccess = ref(false)
 const importError = ref(false)
+const searchQuery = ref('')
 </script>
 
 <template>
-  <!-- 首页：带 Sidebar + Header 的 Dashboard 布局 -->
-  <div v-if="isHome" class="h-screen overflow-hidden flex flex-col md:flex-row">
+  <div class="h-screen flex flex-col overflow-hidden">
+    <TitleBar />
+
+    <!-- 首页：带 Sidebar + Header 的 Dashboard 布局 -->
+    <div v-if="isHome" class="flex-1 overflow-hidden flex flex-col md:flex-row">
     <Sidebar v-model="sidebarNav" @open-settings="showSettings = true" />
 
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -108,10 +115,10 @@ const importError = ref(false)
         style="background-image: radial-gradient(#f9b11f 1px, transparent 1px); background-size: 20px 20px;"
       />
 
-      <DashboardHeader :nav-mode="sidebarNav" />
+      <DashboardHeader :nav-mode="sidebarNav" v-model="searchQuery" />
 
       <div ref="homeScrollRef" class="flex-1 overflow-y-auto p-6 md:p-8 z-10 pb-20">
-        <router-view :nav-mode="sidebarNav" />
+        <router-view :nav-mode="sidebarNav" :search-query="searchQuery" />
       </div>
     </main>
 
@@ -277,34 +284,17 @@ const importError = ref(false)
     </Teleport>
   </div>
 
-  <!-- 工具页：全屏布局 -->
-  <div v-else class="h-screen flex flex-col overflow-hidden bg-bg-dark">
-    <header class="flex items-center gap-3 px-5 py-3 border-b-4 border-black bg-deep-charcoal z-10 shrink-0">
-      <button
-        class="px-3 py-1.5 bg-deep-charcoal text-white font-bold border-2 border-white/20 rounded shadow-hard-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] hover:border-primary transition-all flex items-center gap-1.5 text-sm"
-        @click="router.push('/')"
-      >
-        <span class="material-icons text-base">arrow_back</span>
-        返回
-      </button>
-      <div class="w-px h-6 bg-white/10" />
-      <span class="material-icons text-primary text-xl">{{ currentToolIcon }}</span>
-      <span class="text-lg font-bold text-white uppercase tracking-wide">{{ currentToolName }}</span>
-
-      <!-- 收藏按钮 -->
-      <button
-        class="ml-auto w-9 h-9 rounded-lg border-2 flex items-center justify-center transition-all hover:scale-110"
-        :class="isFavorite(currentToolId) ? 'bg-coral-red border-coral-red' : 'bg-transparent border-white/20 hover:border-coral-red'"
-        @click="toggleFavorite(currentToolId)"
-      >
-        <span class="material-icons text-lg" :class="isFavorite(currentToolId) ? 'text-white' : 'text-gray-400'">
-          {{ isFavorite(currentToolId) ? 'favorite' : 'favorite_border' }}
-        </span>
-      </button>
-    </header>
-
-    <div class="flex-1 overflow-y-auto p-5">
-      <router-view />
+    <!-- 工具页：左侧工具栏 + 右侧（TabBar + 内容区） -->
+    <div v-else class="flex-1 flex overflow-hidden bg-bg-dark">
+      <ToolSidebar />
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <TabBar />
+        <div class="flex-1 overflow-y-auto p-5">
+          <router-view />
+        </div>
+      </div>
     </div>
+
+    <CommandPalette v-model="showCommandPalette" />
   </div>
 </template>

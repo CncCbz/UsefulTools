@@ -4,9 +4,14 @@ import { invoke } from '@tauri-apps/api/core'
 
 const props = defineProps<{
   navMode?: number
+  modelValue?: string
 }>()
 
-const searchQuery = ref('')
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
+
+const searchQuery = ref(props.modelValue ?? '')
 const localIp = ref('...')
 const copied = ref(false)
 
@@ -47,7 +52,8 @@ async function copyIp() {
     <div class="w-full md:w-auto flex-1 max-w-xl">
       <div class="relative group">
         <input
-          v-model="searchQuery"
+          :value="searchQuery"
+          @input="searchQuery = ($event.target as HTMLInputElement).value; emit('update:modelValue', searchQuery)"
           type="text"
           placeholder="搜索工具..."
           data-search-input

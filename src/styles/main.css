@@ -58,3 +58,18 @@ html, body, #app {
   color: #000;
 }
 
+
+/* Tab bar thin scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #f9b11f40;
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #f9b11f80;
+}
