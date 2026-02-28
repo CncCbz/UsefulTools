@@ -16,7 +16,19 @@ function load(): TabItem[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
-    return JSON.parse(raw)
+    const tabs: TabItem[] = JSON.parse(raw)
+    // 迁移旧路径格式：/{id} → /tool/{id}
+    let migrated = false
+    for (const tab of tabs) {
+      if (tab.route && !tab.route.startsWith('/tool/')) {
+        tab.route = `/tool${tab.route}`
+        migrated = true
+      }
+    }
+    if (migrated) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tabs))
+    }
+    return tabs
   } catch {
     return []
   }

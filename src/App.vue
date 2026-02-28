@@ -1,33 +1,56 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { save, open } from '@tauri-apps/plugin-dialog'
 import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
 import Sidebar from './components/Sidebar.vue'
 import DashboardHeader from './components/DashboardHeader.vue'
 import TabBar from './components/TabBar.vue'
-import ToolSidebar from './components/ToolSidebar.vue'
 import TitleBar from './components/TitleBar.vue'
 import CommandPalette from './components/CommandPalette.vue'
 import { useSettings, exportAllData, importAllData } from './composables/useSettings'
 import { useTabs } from './composables/useTabs'
 import { usePluginStore } from './composables/usePluginStore'
+import { useUpdater } from './composables/useUpdater'
 
 const route = useRoute()
-const router = useRouter()
 const settings = useSettings()
 const sidebarNav = ref(settings.value.defaultPage)
 
 const isHome = computed(() => route.path === '/')
 const isStore = computed(() => route.path === '/store')
+const isToolPage = computed(() => !isHome.value && !isStore.value)
+// 是否曾经打开过工具页（用于延迟渲染工具区容器）
+const hasEverOpenedTool = ref(false)
 
 const { ensureTab } = useTabs()
 const pluginStore = usePluginStore()
+const { updateAvailable, updateInfo, currentVersion, checkForUpdate, openReleasePage, dismissUpdate } = useUpdater()
 
 // 路由变化时确保标签存在
 watch(() => route.path, (path) => {
   ensureTab(path)
 }, { immediate: true })
+
+// 记录是否曾打开过工具
+watch(isToolPage, (val) => {
+  if (val) hasEverOpenedTool.value = true
+}, { immediate: true })
+
+// ── 工具组件缓存（按 tool id 缓存 defineAsyncComponent 实例） ──
+// const asyncComponentCache = new Map<string, Component>()
+
+// function getToolComponent(toolId: string): Component | null {
+//   if (asyncComponentCache.has(toolId)) {
+//     return asyncComponentCache.get(toolId)!
+//   }
+//   const tool = pluginStore.activeTools.value.find(t => t.id === toolId)
+//   if (!tool?.component) return null
+
+//   const comp = defineAsyncComponent(tool.component)
+//   asyncComponentCache.set(toolId, comp)
+//   return comp
+// }
 
 // 保持首页滚动位置
 const homeScrollRef = ref<HTMLElement | null>(null)
@@ -67,6 +90,7 @@ function handleGlobalKey(e: KeyboardEvent) {
 onMounted(() => {
   document.addEventListener('keydown', handleGlobalKey)
   pluginStore.initialize()
+  checkForUpdate()
 })
 onBeforeUnmount(() => document.removeEventListener('keydown', handleGlobalKey))
 
@@ -143,14 +167,15 @@ async function handleLoadDebug() {
       <router-view />
     </div>
 
-    <!-- 工具页：左侧工具栏 + 右侧（TabBar + 内容区） -->
-    <div v-else class="flex-1 flex overflow-hidden bg-bg-dark">
-      <ToolSidebar />
-      <div class="flex-1 flex flex-col overflow-hidden">
-        <TabBar />
-        <div class="flex-1 overflow-y-auto p-5">
-          <router-view />
-        </div>
+    <!-- 工具页：TabBar + 内容区 -->
+    <div v-else class="flex-1 flex flex-col overflow-hidden bg-bg-dark">
+      <TabBar @open-search="showCommandPalette = true" />
+      <div class="flex-1 overflow-y-auto p-5">
+        <router-view v-slot="{ Component, route: matchedRoute }">
+          <keep-alive>
+            <component :is="Component" :key="matchedRoute.path" />
+          </keep-alive>
+        </router-view>
       </div>
     </div>
 
@@ -364,6 +389,45 @@ async function handleLoadDebug() {
                 <span class="text-primary font-bold">{{ pluginStore.activeTools.value.length }}</span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- 更新通知弹窗 -->
+    <Teleport to="body">
+      <div v-if="updateAvailable && updateInfo" class="fixed inset-0 z-60 flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/60" @click="dismissUpdate" />
+        <div class="relative bg-deep-charcoal border-4 border-black rounded-xl shadow-hard p-6 w-full max-w-md z-10">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-primary border-2 border-black rounded-lg shadow-hard-sm flex items-center justify-center shrink-0">
+              <span class="material-icons text-black text-xl">system_update</span>
+            </div>
+            <div>
+              <h3 class="text-white font-bold text-sm uppercase">发现新版本</h3>
+              <p class="text-white/40 text-xs mt-0.5">
+                {{ currentVersion }} → <span class="text-primary font-bold">{{ updateInfo.version }}</span>
+              </p>
+            </div>
+          </div>
+
+          <div v-if="updateInfo.body" class="mb-5 max-h-[200px] overflow-y-auto scrollbar-thin">
+            <div class="text-white/50 text-xs font-bold uppercase mb-2">更新内容</div>
+            <div class="text-white/70 text-xs leading-relaxed whitespace-pre-wrap bg-black/20 rounded-lg border border-white/5 p-3">{{ updateInfo.body }}</div>
+          </div>
+
+          <div class="flex justify-end gap-2">
+            <button
+              class="px-4 py-2 rounded-lg border-2 border-black bg-[#332b1f] text-white/60 font-bold text-xs hover:text-white hover:border-primary transition-all"
+              @click="dismissUpdate"
+            >稍后再说</button>
+            <button
+              class="px-4 py-2 rounded-lg border-2 border-black bg-primary text-black font-bold text-xs shadow-hard-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center gap-1.5"
+              @click="openReleasePage"
+            >
+              <span class="material-icons text-sm">open_in_new</span>
+              前往下载
+            </button>
           </div>
         </div>
       </div>

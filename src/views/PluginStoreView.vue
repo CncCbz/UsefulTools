@@ -69,6 +69,17 @@ const selectedPluginStatus = computed(() => {
   return getPluginStatus(selectedPlugin.value)
 })
 
+// 获取已安装插件的本地版本号
+function getInstalledVersion(pluginId: string): string | undefined {
+  const installed = pluginStore.installedPlugins.value.find(p => p.meta.id === pluginId)
+  return installed?.meta.version
+}
+
+const selectedPluginInstalledVersion = computed(() => {
+  if (!selectedPlugin.value) return undefined
+  return getInstalledVersion(selectedPlugin.value.id)
+})
+
 // 操作处理
 async function handleInstall(meta: PluginMeta) {
   try {
@@ -158,7 +169,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-full overflow-y-auto p-6">
+  <div class="h-full flex flex-col p-6 overflow-x-hidden">
+    <!-- 固定顶部区域 -->
+    <div class="shrink-0">
     <!-- 头部：返回 + 标题 + 设置/刷新 -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
@@ -316,7 +329,10 @@ onMounted(() => {
         {{ cat }}
       </button>
     </div>
+    </div>
 
+    <!-- 可滚动内容区域 -->
+    <div class="flex-1 overflow-y-auto min-h-0">
     <!-- 加载状态 -->
     <div
       v-if="pluginStore.isLoadingRegistry.value && filteredPlugins.length === 0"
@@ -336,6 +352,7 @@ onMounted(() => {
         :key="plugin.id"
         :plugin="plugin"
         :status="getPluginStatus(plugin)"
+        :installed-version="getInstalledVersion(plugin.id)"
         @install="handleInstall"
         @detail="selectedPlugin = $event"
       />
@@ -351,10 +368,13 @@ onMounted(() => {
       <p class="text-sm mt-1">试试其他关键词或分类吧</p>
     </div>
 
+    </div>
+
     <!-- 插件详情弹窗 -->
     <PluginDetailModal
       :plugin="selectedPlugin"
       :status="selectedPluginStatus"
+      :installed-version="selectedPluginInstalledVersion"
       @close="selectedPlugin = null"
       @install="handleInstall"
       @uninstall="handleUninstall"

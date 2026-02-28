@@ -6,6 +6,9 @@
 @import "material-icons/iconfont/material-icons.css";
 @import "tailwindcss";
 
+/* 插件卡片的 bgColor / textColor 是运行时动态绑定的，Tailwind 扫描不到，需强制保留 */
+@source inline("bg-primary bg-electric-blue bg-neon-green bg-vibrant-purple bg-coral-red bg-hot-pink text-black text-white");
+
 @theme {
   --color-primary: #f9b11f;
   --color-bg-light: #f8f7f5;

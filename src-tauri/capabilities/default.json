@@ -31,7 +31,9 @@
         { "url": "https://translation.googleapis.com/*" },
         { "url": "https://api.siliconflow.cn/*" },
         { "url": "https://plugins.usefultools.com/*" },
-        { "url": "http://localhost:3000/*" }
+        { "url": "http://localhost:3000/*" },
+        { "url": "https://api.github.com/*" },
+        { "url": "https://github.com/cnccbz/usefultools/*" }
       ]
     },
     {
@@ -40,7 +42,9 @@
         { "url": "https://translation.googleapis.com/*" },
         { "url": "https://api.siliconflow.cn/*" },
         { "url": "https://plugins.usefultools.com/*" },
-        { "url": "http://localhost:3000/*" }
+        { "url": "http://localhost:3000/*" },
+        { "url": "https://api.github.com/*" },
+        { "url": "https://github.com/cnccbz/usefultools/*" }
       ]
     }
   ]

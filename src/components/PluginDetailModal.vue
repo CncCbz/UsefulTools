@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { PluginMeta } from '../composables/usePluginStore'
 
-const props = defineProps<{
+defineProps<{
   plugin: PluginMeta | null
   status: 'not-installed' | 'installing' | 'installed' | 'update-available'
+  installedVersion?: string
 }>()
 
 const emit = defineEmits<{
@@ -27,12 +28,6 @@ const capabilityLabels: Record<string, { label: string; icon: string; risk: 'low
 }
 
 // ── 辅助函数 ──────────────────────────────────────────────
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 function isOfficial(plugin: PluginMeta): boolean {
   return plugin.author === 'UsefulTools'
@@ -86,7 +81,11 @@ function riskLabel(risk: 'low' | 'medium' | 'high') {
                   class="shrink-0 px-2 py-0.5 text-[10px] font-bold bg-primary/20 text-primary border border-primary/40 rounded leading-none"
                 >官方</span>
               </div>
-              <span class="text-sm text-gray-400">v{{ plugin.version }}</span>
+              <span v-if="status === 'update-available' && installedVersion" class="text-sm text-gray-400">
+                v{{ installedVersion }} <span class="text-primary">→ v{{ plugin.version }}</span>
+              </span>
+              <span v-else-if="installedVersion" class="text-sm text-gray-400">v{{ installedVersion }}</span>
+              <span v-else class="text-sm text-gray-400">v{{ plugin.version }}</span>
             </div>
           </div>
         </div>

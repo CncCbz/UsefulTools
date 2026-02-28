@@ -1,36 +1,20 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePluginStore } from '../composables/usePluginStore'
 import { useTabs } from '../composables/useTabs'
 import { useFavorites } from '../composables/useFavorites'
+import type { ToolInfo } from '../data/tools'
 
 const route = useRoute()
 const { openTab } = useTabs()
 const { isFavorite } = useFavorites()
-const { activeTools, allCategories } = usePluginStore()
+const { activeTools } = usePluginStore()
 
 const activeFilter = ref<'all' | 'fav'>('all')
 
-// 默认折叠所有分类
-const collapsedCats = reactive(new Set<string>(allCategories.value))
-
-// 当分类变化时，新分类也默认折叠
-watch(allCategories, (cats) => {
-  for (const cat of cats) {
-    if (!collapsedCats.has(cat)) collapsedCats.add(cat)
-  }
-})
-
-// 路由变化时自动展开当前工具所在分类
-watch(() => route.path, (path) => {
-  const tool = activeTools.value.find(t => t.route === path)
-  if (tool) {
-    for (const cat of tool.categories) {
-      collapsedCats.delete(cat)
-    }
-  }
-}, { immediate: true })
+// 默认展开所有分类
+const collapsedCats = reactive(new Set<string>())
 
 function toggleCat(cat: string) {
   if (collapsedCats.has(cat)) collapsedCats.delete(cat)
@@ -78,7 +62,7 @@ const groupedTools = computed(() => {
     <div class="flex-1 overflow-y-auto px-1 pb-2 scrollbar-thin">
       <div v-for="[cat, catTools] in groupedTools" :key="cat" class="mt-1">
         <button
-          class="w-full flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-white/25 uppercase tracking-wider hover:text-white/40 transition-colors"
+          class="w-full flex items-center gap-1 px-2 py-1 text-xs font-bold text-white/25 uppercase tracking-wider hover:text-white/40 transition-colors"
           @click="toggleCat(cat)"
         >
           <span class="material-icons transition-transform duration-150" style="font-size: 10px" :class="collapsedCats.has(cat) ? '-rotate-90' : ''">expand_more</span>

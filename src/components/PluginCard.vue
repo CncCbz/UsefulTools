@@ -4,6 +4,7 @@ import type { PluginMeta } from '../composables/usePluginStore'
 const props = defineProps<{
   plugin: PluginMeta
   status: 'not-installed' | 'installing' | 'installed' | 'update-available'
+  installedVersion?: string
 }>()
 
 const emit = defineEmits<{
@@ -38,7 +39,11 @@ function onInstallClick(e: Event) {
         <h3 class="text-sm font-bold uppercase leading-tight text-white truncate">
           {{ plugin.subtitle }}
         </h3>
-        <span class="text-xs text-gray-500">v{{ plugin.version }}</span>
+        <span v-if="status === 'update-available' && installedVersion" class="text-xs text-gray-500">
+          v{{ installedVersion }} <span class="text-primary">→ v{{ plugin.version }}</span>
+        </span>
+        <span v-else-if="installedVersion" class="text-xs text-gray-500">v{{ installedVersion }}</span>
+        <span v-else class="text-xs text-gray-500">v{{ plugin.version }}</span>
       </div>
     </div>
 

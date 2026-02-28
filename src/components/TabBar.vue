@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTabs, type TabItem } from '../composables/useTabs'
 import { useFavorites } from '../composables/useFavorites'
@@ -44,6 +44,25 @@ function onMouseDown(e: MouseEvent, tab: TabItem) {
     closeTab(tab.id)
   }
 }
+
+/** 返回首页确认 */
+const showGoHomeConfirm = ref(false)
+
+const emit = defineEmits<{ openSearch: [] }>()
+
+function handleGoHome() {
+  if (openTabs.value.length > 0) {
+    showGoHomeConfirm.value = true
+  } else {
+    router.push('/')
+  }
+}
+
+function confirmGoHome() {
+  showGoHomeConfirm.value = false
+  closeAllTabs()
+  router.push('/')
+}
 </script>
 
 <template>
@@ -52,7 +71,7 @@ function onMouseDown(e: MouseEvent, tab: TabItem) {
     <button
       class="h-full px-3 flex items-center text-white/50 hover:text-primary hover:bg-white/5 transition-all border-r border-black/30 shrink-0"
       title="返回首页"
-      @click="router.push('/')"
+      @click="handleGoHome"
     >
       <span class="material-icons text-lg">arrow_back</span>
     </button>
@@ -87,6 +106,15 @@ function onMouseDown(e: MouseEvent, tab: TabItem) {
       </button>
     </div>
 
+    <!-- 新建标签按钮 -->
+    <button
+      class="h-full px-2.5 flex items-center text-white/30 hover:text-primary hover:bg-white/5 transition-all border-l border-black/20 shrink-0"
+      title="打开新工具"
+      @click="emit('openSearch')"
+    >
+      <span class="material-icons text-lg">add</span>
+    </button>
+
     <!-- 收藏按钮 -->
     <button
       v-if="currentToolId()"
@@ -117,6 +145,28 @@ function onMouseDown(e: MouseEvent, tab: TabItem) {
         <button class="w-full text-left px-3 py-1.5 text-xs font-bold text-coral-red/70 hover:text-coral-red hover:bg-coral-red/10 transition-colors" @click="handleCtx('closeAll')">
           关闭所有标签
         </button>
+      </div>
+    </div>
+
+    <!-- 返回首页确认弹窗 -->
+    <div v-if="showGoHomeConfirm" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/60" @click="showGoHomeConfirm = false" />
+      <div class="relative bg-deep-charcoal border-4 border-black rounded-xl shadow-hard p-6 w-full max-w-sm z-10">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="material-icons text-primary text-2xl">warning</span>
+          <h3 class="text-white font-bold text-sm uppercase">返回首页</h3>
+        </div>
+        <p class="text-white/60 text-sm mb-6">返回首页后，当前打开的工具内容将不会保留，确定要返回吗？</p>
+        <div class="flex justify-end gap-2">
+          <button
+            class="px-4 py-2 rounded-lg border-2 border-black bg-[#332b1f] text-white/60 font-bold text-xs hover:text-white hover:border-primary transition-all"
+            @click="showGoHomeConfirm = false"
+          >取消</button>
+          <button
+            class="px-4 py-2 rounded-lg border-2 border-black bg-primary text-black font-bold text-xs shadow-hard-sm hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+            @click="confirmGoHome"
+          >确定返回</button>
+        </div>
       </div>
     </div>
   </Teleport>
